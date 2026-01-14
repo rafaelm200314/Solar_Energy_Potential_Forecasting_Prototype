@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Badge } from './ui/badge';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
+import type { LeafletMouseEvent } from "leaflet";
 
 const defaultIcon = L.icon({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -29,13 +30,9 @@ interface PredictionResult {
   humidity: number;
   clearSkyRatio: number;
 }
-function ClickToSetLocation({
-  onPick,
-}: {
-  onPick: (lat: number, lng: number) => void;
-}) {
+function ClickToSetLocation({ onPick }: { onPick: (lat: number, lng: number) => void }) {
   useMapEvents({
-    click(e) {
+    click(e: LeafletMouseEvent) {
       onPick(e.latlng.lat, e.latlng.lng);
     },
   });
