@@ -40,13 +40,10 @@ const predictionComparisonData = [
 ];
 
 export function ModelAnalytics() {
-  const targetRmse = 0.65;
-  const baselineGap = performanceMetrics.baseline.rmse - targetRmse;
-  const currentGap = Math.max(performanceMetrics.fiAdaBoost.rmse - targetRmse, 0);
-  const gapClosed = baselineGap - currentGap;
-  const gapClosedPct = baselineGap > 0 ? (gapClosed / baselineGap) * 100 : 0;
-  const gapClosedDisplay = gapClosedPct.toFixed(1);
-  const gapRemainingDisplay = currentGap.toFixed(3);
+  const improvementPercentage = (
+    ((performanceMetrics.baseline.rmse - performanceMetrics.fiAdaBoost.rmse) / 
+    performanceMetrics.baseline.rmse) * 100
+  ).toFixed(1);
 
   return (
     <div className="space-y-8">
@@ -57,10 +54,9 @@ export function ModelAnalytics() {
             <Target className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl">Optimization Gap Closure</h2>
-            <p className="text-sm text-gray-600">Tuning AdaBoost via feature importance to meet targets</p>
+            <h2 className="text-2xl">Performance Metrics Comparison</h2>
+            <p className="text-sm text-gray-600">Baseline AdaBoost → FI-AdaBoost</p>
             <p className="text-xs text-gray-500 mt-1">
-              Goal: close the optimization gap to acceptable accuracy, not just beat the baseline.
             </p>
           </div>
         </div>
@@ -92,20 +88,20 @@ export function ModelAnalytics() {
         </div>
 
        
-        <Card className="mt-6 border-2 border-blue-200 bg-gradient-to-br from-blue-50 via-cyan-50 to-slate-50 shadow-xl">
+        <Card className="mt-6 border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 shadow-xl">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
                 <Award className="w-8 h-8 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-600 mb-1">Optimization gap closed toward target RMSE ≤ {targetRmse.toFixed(2)}</p>
-                <p className="text-5xl bg-gradient-to-r from-blue-700 to-slate-900 bg-clip-text text-transparent mb-1">
-                  {gapClosedDisplay}%
+                <p className="text-sm text-gray-600 mb-1">FI-AdaBoost Optimization Achievement</p>
+                <p className="text-5xl bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent mb-1">
+                  {improvementPercentage}%
                 </p>
-                <p className="text-sm text-gray-600">Remaining gap: {gapRemainingDisplay} RMSE</p>
+                <p className="text-sm text-gray-600">Goal: addressing the optimization gap through feature importance tuning.</p>
               </div>
-              <Zap className="w-12 h-12 text-blue-400 opacity-20" />
+              <Zap className="w-12 h-12 text-yellow-500 opacity-20" />
             </div>
           </CardContent>
         </Card>
@@ -295,9 +291,6 @@ function MetricCard({ title, baseline, fiAdaBoost, unit, lowerIsBetter, descript
     : ((fiAdaBoost - baseline) / baseline) * 100;
   
   const isImprovement = improvement > 0;
-  const badgeBase = isImprovement
-    ? 'bg-blue-100 text-blue-700 border border-blue-200'
-    : 'bg-amber-100 text-amber-700 border border-amber-200';
 
   return (
     <Card>
@@ -314,9 +307,9 @@ function MetricCard({ title, baseline, fiAdaBoost, unit, lowerIsBetter, descript
           <p className="text-xs text-gray-500">FI-AdaBoost</p>
           <p className="text-2xl">{fiAdaBoost.toFixed(3)}{unit}</p>
         </div>
-        <Badge className={badgeBase}>
+        <Badge className={isImprovement ? 'bg-green-500' : 'bg-red-500'}>
           {isImprovement ? <TrendingDown className="w-3 h-3 mr-1" /> : <TrendingUp className="w-3 h-3 mr-1" />}
-          {Math.abs(improvement).toFixed(1)}% gap change
+          {Math.abs(improvement).toFixed(1)}% {isImprovement ? 'better' : 'worse'}
         </Badge>
       </CardContent>
     </Card>
