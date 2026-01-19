@@ -112,7 +112,7 @@ export function ForecastingTool() {
       label: 'Excellent', 
       color: 'bg-emerald-500',
       bgGradient: 'from-emerald-500 to-green-600',
-      description: 'Outstanding solar energy potential. Ideal for solar panel installation with high ROI expected.'
+      description: 'Outstanding solar energy potential. Ideal for solar panel installation with strong energy output.'
     };
     if (potential >= 4.5) return { 
       label: 'Very Good', 
@@ -124,7 +124,7 @@ export function ForecastingTool() {
       label: 'Good', 
       color: 'bg-amber-500',
       bgGradient: 'from-amber-500 to-yellow-600',
-      description: 'Moderate solar energy potential. Solar installation is viable with reasonable returns.'
+      description: 'Moderate solar energy potential. Solar installation is viable with reasonable energy output.'
     };
     return { 
       label: 'Fair', 
@@ -324,7 +324,7 @@ export function ForecastingTool() {
             </CardContent>
           </Card>
 
-          {/* Rooftop Information */}
+          {/* Rooftop Information
           <Card className="border-2 border-purple-100 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
               <CardTitle className="flex items-center gap-2">
@@ -363,7 +363,7 @@ export function ForecastingTool() {
             </CardContent>
           </Card>
 
-          {/* Weather Summary */}
+         
           <Card className="border-2 border-cyan-100 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50">
               <CardTitle className="flex items-center gap-2">
@@ -403,7 +403,7 @@ export function ForecastingTool() {
                 />
               </div>
 
-              {/* Clear Sky Ratio */}
+           
               <div className="mt-6 p-4 bg-gradient-to-r from-sky-50 to-blue-50 rounded-xl border-2 border-sky-200 shadow-md">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-sm">Clear Sky Ratio</span>
@@ -421,7 +421,7 @@ export function ForecastingTool() {
                 </p>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
       )}
     </div>
