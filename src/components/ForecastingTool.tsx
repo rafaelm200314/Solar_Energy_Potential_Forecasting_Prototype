@@ -198,7 +198,7 @@ export function ForecastingTool() {
   <Label className="text-sm">Pin Your Exact Location on Map</Label>
 
  {/* Map Picker */}
-<div className="rounded-lg overflow-hidden border-2 border-blue-300 shadow-lg" style={{ height: 500 }}>
+<div className="rounded-lg overflow-hidden border-2 border-blue-300 shadow-lg h-64 sm:h-96 md:h-[500px] relative z-0">
   <MapContainer
     center={[7.0731, 125.6128] as [number, number]}
     zoom={12}
@@ -324,7 +324,7 @@ export function ForecastingTool() {
             </CardContent>
           </Card>
 
-          {/* Rooftop Information
+          {/* Rooftop Information */}
           <Card className="border-2 border-purple-100 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
               <CardTitle className="flex items-center gap-2">
@@ -363,7 +363,7 @@ export function ForecastingTool() {
             </CardContent>
           </Card>
 
-         
+          {/* Weather Conditions Summary */}
           <Card className="border-2 border-cyan-100 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50">
               <CardTitle className="flex items-center gap-2">
@@ -421,7 +421,7 @@ export function ForecastingTool() {
                 </p>
               </div>
             </CardContent>
-          </Card> */}
+          </Card>
         </div>
       )}
     </div>

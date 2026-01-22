@@ -62,28 +62,28 @@ export function ModelAnalytics() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <MetricCard
-            title="RMSE"
+            title="Root Mean Square Error"
             baseline={performanceMetrics.baseline.rmse}
             fiAdaBoost={performanceMetrics.fiAdaBoost.rmse}
             unit=""
             lowerIsBetter
-            description="Root Mean Square Error"
+            description=""
           />
           <MetricCard
-            title="MAE"
+            title="Mean Absolute Error"
             baseline={performanceMetrics.baseline.mae}
             fiAdaBoost={performanceMetrics.fiAdaBoost.mae}
             unit=""
             lowerIsBetter
-            description="Mean Absolute Error"
+            description=""
           />
           <MetricCard
-            title="R² Score"
+            title="Coefficient of Determination (R²)"
             baseline={performanceMetrics.baseline.r2}
             fiAdaBoost={performanceMetrics.fiAdaBoost.r2}
             unit=""
             lowerIsBetter={false}
-            description="Coefficient of Determination"
+            description=""
           />
         </div>
 
@@ -107,7 +107,7 @@ export function ModelAnalytics() {
         </Card>
       </div>
 
-       {/* Key Improvement Highlight 
+      {/* Key Improvement Highlight */}
       <Card className="border-2 border-orange-100 shadow-xl">
         <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50">
           <CardTitle className="text-xl">Feature Importance Ranking</CardTitle>
@@ -116,22 +116,25 @@ export function ModelAnalytics() {
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={featureImportanceData} layout="vertical" margin={{ left: 120, right: 20, top: 10, bottom: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis type="number" domain={[0, 0.3]} stroke="#6b7280" />
-              <YAxis dataKey="feature" type="category" tick={{ fontSize: 13 }} stroke="#6b7280" width={110} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  border: '2px solid #e5e7eb', 
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                }} 
-              />
-              <Bar dataKey="importance" name="Feature Importance" fill="#f97316" radius={[0, 8, 8, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="overflow-x-auto">
+            <ResponsiveContainer width="100%" height={400} minWidth={300}>
+              <BarChart data={featureImportanceData} layout="vertical" margin={{ left: 10, right: 10, top: 10, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis type="number" domain={[0, 0.3]} stroke="#6b7280" tick={{ fontSize: 11 }} />
+                <YAxis dataKey="feature" type="category" tick={{ fontSize: 11 }} stroke="#6b7280" width={90} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    border: '2px solid #e5e7eb', 
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    fontSize: '12px'
+                  }} 
+                />
+                <Bar dataKey="importance" name="Feature Importance" fill="#f97316" radius={[0, 8, 8, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
           
           
           <div className="mt-6 space-y-3">
@@ -177,8 +180,8 @@ export function ModelAnalytics() {
         </CardContent>
       </Card>
 
-     
-      <Card className="border-2 border-blue-100 shadow-xl">
+      {/* Prediction Accuracy Comparison */}
+      {/* <Card className="border-2 border-blue-100 shadow-xl">
         <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
           <CardTitle className="text-xl">Prediction Accuracy Comparison</CardTitle>
           <CardDescription>
@@ -226,10 +229,10 @@ export function ModelAnalytics() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
-     
-      <Card className="border-2 border-yellow-100 shadow-xl">
+      {/* Research Insights */}
+      {/* <Card className="border-2 border-yellow-100 shadow-xl">
         <CardHeader className="bg-gradient-to-r from-yellow-50 to-amber-50">
           <CardTitle className="flex items-center gap-2 text-xl">
             <Lightbulb className="w-6 h-6 text-yellow-600" />
@@ -271,7 +274,7 @@ export function ModelAnalytics() {
             />
           </div>
         </CardContent>
-      </Card>*/}
+      </Card> */}
     </div>
   );
 }
