@@ -87,24 +87,40 @@ export function ForecastingTool() {
 
 
 
-  const handlePredict = () => {
+  const handlePredict = async () => {
+    if (!coordinates.lat || !coordinates.lng) {
+      alert('Please enter valid coordinates or select a location on the map');
+      return;
+    }
+
     setIsLoading(true);
-    // Simulate prediction with mock data
-    setTimeout(() => {
-      setPrediction({
-        solarPotential: 5.2 + Math.random() * 0.8,
-        rooftopArea: 85 + Math.random() * 30,
-        solarExposureIndex: 0.75 + Math.random() * 0.15,
-        orientation: 'South-Southeast',
-        azimuth: 155 + Math.random() * 20,
-        sunshineHours: 7.5 + Math.random() * 1.5,
-        cloudCover: 30 + Math.random() * 20,
-        temperature: 28 + Math.random() * 4,
-        humidity: 65 + Math.random() * 15,
-        clearSkyRatio: 0.68 + Math.random() * 0.15,
+    
+    try {
+      // Call backend API
+      const response = await fetch('http://localhost:5000/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          lat: parseFloat(coordinates.lat),
+          lng: parseFloat(coordinates.lng),
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Prediction failed');
+      }
+
+      const data = await response.json();
+      setPrediction(data);
+    } catch (error) {
+      console.error('Prediction error:', error);
+      alert(`Failed to get prediction: ${error instanceof Error ? error.message : 'Unknown error'}\n\nMake sure the backend server is running on http://localhost:5000`);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const getSolarRating = (potential: number): { label: string; color: string; description: string; bgGradient: string } => {
