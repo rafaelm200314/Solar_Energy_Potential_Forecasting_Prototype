@@ -11,29 +11,53 @@ from datetime import datetime
 
 # Add src to path for FIAdaBoostRegressor import
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+
+# Import and make available in __main__ namespace for pickle compatibility
+import model_training
 from model_training import FIAdaBoostRegressor
+
+# Pickle compatibility: make class available in __main__ namespace
+sys.modules['__main__'].FIAdaBoostRegressor = FIAdaBoostRegressor
 
 
 class SolarEnergyPredictor:
     """
-    Manages solar energy predictions using trained FI-AdaBoost model
+    Manages solar energy predictions using trained models
+    Supports both FI-AdaBoost and Baseline AdaBoost for comparison
     """
     
-    def __init__(self, model_path=None):
-        """Initialize predictor with model path"""
-        if model_path is None:
-            model_path = os.path.join(
+    def __init__(self, fi_model_path=None, baseline_model_path=None):
+        """Initialize predictor with both model paths"""
+        if fi_model_path is None:
+            fi_model_path = os.path.join(
                 os.path.dirname(__file__), 
                 'models', 
                 'fi_adaboost.pkl'
             )
         
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Model not found at {model_path}")
+        if baseline_model_path is None:
+            baseline_model_path = os.path.join(
+                os.path.dirname(__file__), 
+                'models', 
+                'baseline_adaboost.pkl'
+            )
         
-        print(f"Loading model from {model_path}...")
-        self.model = joblib.load(model_path)
-        print("Model loaded successfully!")
+        # Load FI-AdaBoost model
+        if not os.path.exists(fi_model_path):
+            raise FileNotFoundError(f"FI-AdaBoost model not found at {fi_model_path}")
+        
+        print(f"Loading FI-AdaBoost model from {fi_model_path}...")
+        self.fi_model = joblib.load(fi_model_path)
+        print("FI-AdaBoost model loaded successfully!")
+        
+        # Load Baseline model
+        if not os.path.exists(baseline_model_path):
+            print(f"Warning: Baseline model not found at {baseline_model_path}")
+            self.baseline_model = None
+        else:
+            print(f"Loading Baseline model from {baseline_model_path}...")
+            self.baseline_model = joblib.load(baseline_model_path)
+            print("Baseline model loaded successfully!")
         
     def compute_temporal_features(self, month=None):
         """
@@ -173,14 +197,14 @@ class SolarEnergyPredictor:
         weather = self.estimate_weather_features(lat, lng, month)
         rooftop = self.compute_rooftop_features(lat, lng)
         
-        # Prepare feature vector in correct order
-        # Expected: T2M, RH2M, ALLSKY_KT, month_sin, month_cos, season,
-        #           rooftop_area_sq_m, orientation_score, shading_factor,
-        #           tilt_factor, solar_exposure_index
-        features = pd.DataFrame([{
+        # Prepare feature vectors for both models
+        # FI-AdaBoost uses all 13 features
+        fi_features = pd.DataFrame([{
             'T2M': weather['T2M'],
             'RH2M': weather['RH2M'],
             'ALLSKY_KT': weather['ALLSKY_KT'],
+            'lat': lat,
+            'lon': lng,
             'month_sin': temporal['month_sin'],
             'month_cos': temporal['month_cos'],
             'season': temporal['season'],
@@ -191,12 +215,27 @@ class SolarEnergyPredictor:
             'solar_exposure_index': rooftop['solar_exposure_index']
         }])
         
-        # Make prediction
-        solar_potential = self.model.predict(features)[0]
+        # Baseline uses only 6 basic features (time-series baseline)
+        baseline_features = pd.DataFrame([{
+            'T2M': weather['T2M'],
+            'RH2M': weather['RH2M'],
+            'ALLSKY_KT': weather['ALLSKY_KT'],
+            'month_sin': temporal['month_sin'],
+            'month_cos': temporal['month_cos'],
+            'season': temporal['season']
+        }])
+        
+        # Make predictions with both models
+        fi_solar_potential = self.fi_model.predict(fi_features)[0]
+        
+        baseline_solar_potential = None
+        if self.baseline_model is not None:
+            baseline_solar_potential = self.baseline_model.predict(baseline_features)[0]
         
         # Prepare result
         result = {
-            'solarPotential': float(solar_potential),
+            # FI-AdaBoost prediction (primary)
+            'solarPotential': float(fi_solar_potential),
             'rooftopArea': float(rooftop['rooftop_area_sq_m']),
             'solarExposureIndex': float(rooftop['solar_exposure_index']),
             'orientation': self._get_orientation_label(rooftop['azimuth']),
@@ -208,8 +247,11 @@ class SolarEnergyPredictor:
             'shadingFactor': float(rooftop['shading_factor']),
             'tiltFactor': float(rooftop['tilt_factor']),
             # Derived metrics
-            'sunshineHours': float(solar_potential * 1.5),  # Approximate
+            'sunshineHours': float(fi_solar_potential * 1.5),  # Approximate
             'cloudCover': float((1 - weather['ALLSKY_KT']) * 100),
+            # Model comparison
+            'baselinePrediction': float(baseline_solar_potential) if baseline_solar_potential is not None else None,
+            'fiAdaBoostPrediction': float(fi_solar_potential),
         }
         
         return result

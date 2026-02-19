@@ -29,7 +29,16 @@ interface PredictionResult {
   temperature: number;
   humidity: number;
   clearSkyRatio: number;
+  baselinePrediction: number | null;
+  fiAdaBoostPrediction: number;
+  lat?: number;
+  lng?: number;
 }
+
+interface ForecastingToolProps {
+  onNewPrediction?: (prediction: PredictionResult) => void;
+}
+
 function ClickToSetLocation({ onPick }: { onPick: (lat: number, lng: number) => void }) {
   useMapEvents({
     click(e: LeafletMouseEvent) {
@@ -52,7 +61,7 @@ function RecenterMap({ lat, lng, zoom = 16 }: { lat: number; lng: number; zoom?:
 
 
 
-export function ForecastingTool() {
+export function ForecastingTool({ onNewPrediction }: ForecastingToolProps) {
   const [address, setAddress] = useState('');
   const [coordinates, setCoordinates] = useState({ lat: '', lng: '' });
   const [isLoading, setIsLoading] = useState(false);
@@ -96,16 +105,16 @@ export function ForecastingTool() {
     setIsLoading(true);
     
     try {
+      const lat = parseFloat(coordinates.lat);
+      const lng = parseFloat(coordinates.lng);
+      
       // Call backend API
       const response = await fetch('http://localhost:5000/predict', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          lat: parseFloat(coordinates.lat),
-          lng: parseFloat(coordinates.lng),
-        }),
+        body: JSON.stringify({ lat, lng }),
       });
 
       if (!response.ok) {
@@ -115,6 +124,11 @@ export function ForecastingTool() {
 
       const data = await response.json();
       setPrediction(data);
+      
+      // Notify parent component of new prediction
+      if (onNewPrediction) {
+        onNewPrediction({ ...data, lat, lng });
+      }
     } catch (error) {
       console.error('Prediction error:', error);
       alert(`Failed to get prediction: ${error instanceof Error ? error.message : 'Unknown error'}\n\nMake sure the backend server is running on http://localhost:5000`);

@@ -1,9 +1,31 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Cell } from 'recharts';
-import { TrendingDown, TrendingUp, Award, Lightbulb, Zap, Target } from 'lucide-react';
+import { TrendingDown, TrendingUp, Award, Lightbulb, Zap, Target, AlertCircle } from 'lucide-react';
 
-// Mock data for comparisons
+interface PredictionData {
+  solarPotential: number;
+  baselinePrediction: number | null;
+  fiAdaBoostPrediction: number;
+  rooftopArea: number;
+  solarExposureIndex: number;
+  orientation: string;
+  azimuth: number;
+  sunshineHours: number;
+  cloudCover: number;
+  temperature: number;
+  humidity: number;
+  clearSkyRatio: number;
+  lat?: number;
+  lng?: number;
+}
+
+interface ModelAnalyticsProps {
+  latestPrediction: PredictionData | null;
+  predictionHistory: PredictionData[];
+}
+
+// Static performance metrics from training
 const performanceMetrics = {
   baseline: {
     rmse: 0.854,
@@ -39,28 +61,31 @@ const predictionComparisonData = [
   { sample: 'Sample 8', actual: 4.4, baseline: 4.9, fiAdaBoost: 4.5 },
 ];
 
-export function ModelAnalytics() {
+export function ModelAnalytics({ latestPrediction, predictionHistory }: ModelAnalyticsProps) {
   const improvementPercentage = (
     ((performanceMetrics.baseline.rmse - performanceMetrics.fiAdaBoost.rmse) / 
     performanceMetrics.baseline.rmse) * 100
   ).toFixed(1);
 
+  // Prepare prediction comparison data from history
+  const predictionComparisonData = predictionHistory
+    .slice(-8) // Last 8 predictions
+    .map((pred, index) => ({
+      sample: `Sample ${index + 1}`,
+      baseline: pred.baselinePrediction || 0,
+      fiAdaBoost: pred.fiAdaBoostPrediction || pred.solarPotential,
+      location: pred.lat && pred.lng ? `${pred.lat.toFixed(2)}, ${pred.lng.toFixed(2)}` : 'Unknown',
+    }));
+
   return (
     <div className="space-y-8">
       {/* Performance Metrics Comparison */}
-      <div>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
-            <Target className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h2 className="text-2xl">Performance Metrics Comparison</h2>
-            <p className="text-sm text-gray-600">Baseline AdaBoost → FI-AdaBoost</p>
-            <p className="text-xs text-gray-500 mt-1">
-            </p>
-          </div>
+      {/* <div>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Performance Metrics Comparison</h2>
+          <p className="text-lg text-gray-600">Baseline AdaBoost → FI-AdaBoost</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <MetricCard
             title="Root Mean Square Error"
             baseline={performanceMetrics.baseline.rmse}
@@ -85,7 +110,7 @@ export function ModelAnalytics() {
             lowerIsBetter={false}
             description=""
           />
-        </div>
+        </div> }
 
        
         <Card className="mt-6 border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 shadow-xl">
@@ -105,10 +130,130 @@ export function ModelAnalytics() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
+
+      {/* Latest Prediction Comparison */}
+      {latestPrediction && latestPrediction.baselinePrediction && (
+        <Card className="border-2 border-blue-100 shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
+            <CardTitle className="text-xl">Latest Prediction Comparison</CardTitle>
+            <CardDescription>
+              Real-time comparison: Baseline vs FI-AdaBoost
+              {latestPrediction.lat && latestPrediction.lng && (
+                <span className="block mt-1 text-xs">
+                  Location: {latestPrediction.lat.toFixed(4)}, {latestPrediction.lng.toFixed(4)}
+                </span>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-6 bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl border-2 border-gray-200 shadow-md">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                  <span className="text-sm text-gray-600">Baseline AdaBoost</span>
+                </div>
+                <div className="text-5xl mb-2">
+                  {latestPrediction.baselinePrediction.toFixed(2)}
+                </div>
+                <p className="text-sm text-gray-600">kWh/m²/day</p>
+              </div>
+              
+              <div className="p-6 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border-2 border-orange-200 shadow-md">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                  <span className="text-sm text-gray-600">FI-AdaBoost</span>
+                </div>
+                <div className="text-5xl mb-2 text-orange-600">
+                  {latestPrediction.fiAdaBoostPrediction.toFixed(2)}
+                </div>
+                <p className="text-sm text-gray-600">kWh/m²/day</p>
+              </div>
+            </div>
+
+            {/* Difference indicator */}
+            <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200 shadow-md">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Prediction Difference</span>
+                <div className="text-right">
+                  <span className="text-2xl">
+                    {Math.abs(latestPrediction.fiAdaBoostPrediction - latestPrediction.baselinePrediction).toFixed(3)}
+                  </span>
+                  <span className="text-sm text-gray-600 ml-2">kWh/m²/day</span>
+                </div>
+              </div>
+              <div className="mt-2">
+                <Badge className={
+                  latestPrediction.fiAdaBoostPrediction > latestPrediction.baselinePrediction 
+                    ? 'bg-green-500' 
+                    : latestPrediction.fiAdaBoostPrediction < latestPrediction.baselinePrediction 
+                    ? 'bg-orange-500' 
+                    : 'bg-gray-500'
+                }>
+                  {latestPrediction.fiAdaBoostPrediction > latestPrediction.baselinePrediction 
+                    ? 'FI-AdaBoost predicts higher potential' 
+                    : latestPrediction.fiAdaBoostPrediction < latestPrediction.baselinePrediction 
+                    ? 'FI-AdaBoost predicts lower potential' 
+                    : 'Both models agree'}
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Prediction History Chart */}
+      {predictionHistory.length > 0 && (
+        <Card className="border-2 border-purple-100 shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
+            <CardTitle className="text-xl">Prediction History</CardTitle>
+            <CardDescription>
+              Comparison across your recent predictions ({predictionHistory.length} total)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <ResponsiveContainer width="100%" height={350}>
+              <LineChart data={predictionComparisonData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="sample" stroke="#6b7280" />
+                <YAxis domain={['auto', 'auto']} label={{ value: 'kWh/m²/day', angle: -90, position: 'insideLeft' }} stroke="#6b7280" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    border: '2px solid #e5e7eb', 
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}
+                  formatter={(value: number) => value.toFixed(3)}
+                />
+                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                <Line type="monotone" dataKey="baseline" stroke="#94a3b8" strokeWidth={2} name="Baseline AdaBoost" strokeDasharray="5 5" dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="fiAdaBoost" stroke="#f97316" strokeWidth={2} name="FI-AdaBoost" dot={{ r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* No predictions yet message */}
+      {!latestPrediction && (
+        <Card className="border-2 border-yellow-100 shadow-xl">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-center gap-4 p-6 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl">
+              <AlertCircle className="w-12 h-12 text-yellow-600" />
+              <div>
+                <h3 className="text-lg mb-1">No Predictions Yet</h3>
+                <p className="text-sm text-gray-600">
+                  Go to the <strong>Forecasting Tool</strong> tab and make a prediction to see real-time model comparison here.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Key Improvement Highlight */}
-      <Card className="border-2 border-orange-100 shadow-xl">
+      {/* <Card className="border-2 border-orange-100 shadow-xl">
         <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50">
           <CardTitle className="text-xl">Feature Importance Ranking</CardTitle>
           <CardDescription>
@@ -178,7 +323,7 @@ export function ModelAnalytics() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Prediction Accuracy Comparison */}
       {/* <Card className="border-2 border-blue-100 shadow-xl">
@@ -296,23 +441,22 @@ function MetricCard({ title, baseline, fiAdaBoost, unit, lowerIsBetter, descript
   const isImprovement = improvement > 0;
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm">{title}</CardTitle>
-        <CardDescription className="text-xs">{description}</CardDescription>
+    <Card className="border-2 border-gray-100 shadow-lg">
+      <CardHeader className="pb-4 bg-gradient-to-r from-gray-50 to-slate-50">
+        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+        {description && <CardDescription className="text-xs">{description}</CardDescription>}
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div>
-          <p className="text-xs text-gray-500">Baseline AdaBoost</p>
-          <p className="text-lg text-gray-600">{baseline.toFixed(3)}{unit}</p>
+      <CardContent className="space-y-4 pt-6">
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-gray-600">Baseline AdaBoost</p>
+          <p className="text-3xl font-bold text-gray-700">{baseline.toFixed(3)}{unit}</p>
         </div>
-        <div>
-          <p className="text-xs text-gray-500">FI-AdaBoost</p>
-          <p className="text-2xl">{fiAdaBoost.toFixed(3)}{unit}</p>
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-gray-600">FI-AdaBoost</p>
+          <p className="text-3xl font-bold text-blue-600">{fiAdaBoost.toFixed(3)}{unit}</p>
         </div>
-        <Badge className={isImprovement ? 'bg-green-500' : 'bg-red-500'}>
-          {isImprovement ? <TrendingDown className="w-3 h-3 mr-1" /> : <TrendingUp className="w-3 h-3 mr-1" />}
-          {Math.abs(improvement).toFixed(1)}% {isImprovement ? 'better' : 'worse'}
+        <Badge className={`${isImprovement ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'} text-white px-3 py-1 text-sm`}>
+          {Math.abs(improvement).toFixed(1)}% better
         </Badge>
       </CardContent>
     </Card>

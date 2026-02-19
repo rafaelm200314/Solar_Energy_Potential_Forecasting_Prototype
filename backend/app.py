@@ -5,6 +5,13 @@ Serves predictions from the trained FI-AdaBoost model
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
+import sys
+
+# Pickle compatibility: Import FIAdaBoostRegressor before loading model
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+from model_training import FIAdaBoostRegressor
+sys.modules['__main__'].FIAdaBoostRegressor = FIAdaBoostRegressor
+
 from predictor import SolarEnergyPredictor
 
 app = Flask(__name__)
