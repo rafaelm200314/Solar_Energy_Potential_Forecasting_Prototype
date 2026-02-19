@@ -4,7 +4,32 @@ import { ModelAnalytics } from './components/ModelAnalytics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Sun, BarChart3 } from 'lucide-react';
 
+interface PredictionData {
+  solarPotential: number;
+  baselinePrediction: number | null;
+  fiAdaBoostPrediction: number;
+  rooftopArea: number;
+  solarExposureIndex: number;
+  orientation: string;
+  azimuth: number;
+  sunshineHours: number;
+  cloudCover: number;
+  temperature: number;
+  humidity: number;
+  clearSkyRatio: number;
+  lat?: number;
+  lng?: number;
+}
+
 export default function App() {
+  const [latestPrediction, setLatestPrediction] = useState<PredictionData | null>(null);
+  const [predictionHistory, setPredictionHistory] = useState<PredictionData[]>([]);
+
+  const handleNewPrediction = (prediction: PredictionData) => {
+    setLatestPrediction(prediction);
+    setPredictionHistory(prev => [...prev, prediction]);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
       {/* Header */}
@@ -47,11 +72,14 @@ export default function App() {
           </TabsList>
           
           <TabsContent value="forecasting" className="mt-0">
-            <ForecastingTool />
+            <ForecastingTool onNewPrediction={handleNewPrediction} />
           </TabsContent>
           
           <TabsContent value="analytics" className="mt-0">
-            <ModelAnalytics />
+            <ModelAnalytics 
+              latestPrediction={latestPrediction} 
+              predictionHistory={predictionHistory}
+            />
           </TabsContent>
         </Tabs>
       </main>
