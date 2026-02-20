@@ -3,7 +3,7 @@ Flask API Server for Solar Energy Forecasting
 Serves predictions from the trained FI-AdaBoost model
 Also serves the React frontend build as static files
 """
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 import os
 import sys
@@ -15,9 +15,19 @@ sys.modules['__main__'].FIAdaBoostRegressor = FIAdaBoostRegressor
 
 from predictor import SolarEnergyPredictor
 
+# Get absolute paths
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
+DIST_DIR = os.path.join(PROJECT_ROOT, 'dist')
+
+print(f"Backend directory: {BACKEND_DIR}")
+print(f"Project root: {PROJECT_ROOT}")
+print(f"Dist directory: {DIST_DIR}")
+print(f"Dist exists: {os.path.exists(DIST_DIR)}")
+
 app = Flask(__name__, 
-    static_folder=os.path.join(os.path.dirname(__file__), '..', 'dist'),
-    static_url_path='')
+    static_folder=DIST_DIR,
+    static_url_path='/')
 CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS for all origins
 
 # Initialize predictor
@@ -161,13 +171,26 @@ def internal_error(error):
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_react(path):
-    """Serve React frontend or API endpoints"""
-    # If it's an API call, it would have been handled by routes above
-    # Otherwise serve the React app
-    dist_folder = os.path.join(os.path.dirname(__file__), '..', 'dist')
-    if path != '' and os.path.exists(os.path.join(dist_folder, path)):
-        return send_from_directory(dist_folder, path)
-    return send_from_directory(dist_folder, 'index.html')
+    """Serve React frontend for all non-API routes"""
+    # Skip static files and API endpoints
+    if path.startswith('api') or path.startswith('predict') or path.startswith('health') or path.startswith('info'):
+        return jsonify({'error': 'Endpoint not found'}), 404
+    
+    # Check if it's a static file in dist
+    file_path = os.path.join(DIST_DIR, path)
+    if path and os.path.isfile(file_path):
+        return send_from_directory(DIST_DIR, path)
+    
+    # Serve index.html for React routing
+    index_file = os.path.join(DIST_DIR, 'index.html')
+    if os.path.exists(index_file):
+        return send_from_directory(DIST_DIR, 'index.html')
+    
+    return jsonify({
+        'error': 'Frontend not available',
+        'dist_exists': os.path.exists(DIST_DIR),
+        'dist_path': DIST_DIR
+    })
 
 
 if __name__ == '__main__':
