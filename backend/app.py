@@ -39,21 +39,6 @@ except Exception as e:
     predictor = None
 
 
-@app.route('/', methods=['GET'])
-def root():
-    """Root endpoint"""
-    return jsonify({
-        'message': 'Solar Energy Forecasting API',
-        'version': '1.0.0',
-        'status': 'running',
-        'endpoints': {
-            'GET /health': 'Health check',
-            'POST /predict': 'Make prediction',
-            'GET /info': 'Model information'
-        }
-    })
-
-
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
