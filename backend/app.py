@@ -15,7 +15,7 @@ sys.modules['__main__'].FIAdaBoostRegressor = FIAdaBoostRegressor
 from predictor import SolarEnergyPredictor
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend requests
+CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS for all origins
 
 # Initialize predictor
 try:
@@ -24,6 +24,21 @@ try:
 except Exception as e:
     print(f"✗ Error initializing predictor: {e}")
     predictor = None
+
+
+@app.route('/', methods=['GET'])
+def root():
+    """Root endpoint"""
+    return jsonify({
+        'message': 'Solar Energy Forecasting API',
+        'version': '1.0.0',
+        'status': 'running',
+        'endpoints': {
+            'GET /health': 'Health check',
+            'POST /predict': 'Make prediction',
+            'GET /info': 'Model information'
+        }
+    })
 
 
 @app.route('/health', methods=['GET'])
@@ -141,6 +156,7 @@ def internal_error(error):
 
 
 if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
     print("\n" + "="*50)
     print("Solar Energy Forecasting API Server")
     print("="*50)
@@ -148,7 +164,7 @@ if __name__ == '__main__':
     print("  GET  /health  - Health check")
     print("  POST /predict - Make prediction")
     print("  GET  /info    - Model information")
-    print("\nStarting server on http://localhost:5000")
+    print(f"\nStarting server on port {port}")
     print("="*50 + "\n")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=port)
