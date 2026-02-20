@@ -13,7 +13,7 @@ RUN npm ci
 COPY . .
 
 # Build React app
-RUN npm run build
+RUN npm run build && echo "Build complete, dist contents:" && ls -la dist/
 
 # Runtime stage - Python with Node
 FROM python:3.11-slim
@@ -25,6 +25,9 @@ RUN apt-get update && apt-get install -y nodejs npm && rm -rf /var/lib/apt/lists
 
 # Copy built React app from builder
 COPY --from=builder /app/dist ./dist
+
+# Verify dist folder
+RUN echo "Dist folder contents:" && ls -la dist/ || echo "ERROR: dist folder is empty!"
 
 # Copy backend files
 COPY backend ./backend
