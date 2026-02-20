@@ -1,0 +1,12 @@
+node_modules
+.git
+.vscode
+*.pyc
+__pycache__
+.pytest_cache
+.env
+.env.local
+*.log
+.DS_Store
+# Don't ignore model files - they need to be deployed
+# !backend/models/*.pkl
