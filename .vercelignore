@@ -1,3 +1,8 @@
+# Ignore backend - deploy separately to Railway/Render
+backend/
+api/
+
+# Standard ignores
 node_modules
 .git
 .vscode
@@ -8,5 +13,3 @@ __pycache__
 .env.local
 *.log
 .DS_Store
-# Don't ignore model files - they need to be deployed
-# !backend/models/*.pkl
