@@ -108,8 +108,15 @@ export function ForecastingTool({ onNewPrediction }: ForecastingToolProps) {
       const lat = parseFloat(coordinates.lat);
       const lng = parseFloat(coordinates.lng);
       
+      // Use environment-aware API URL
+      // In development: http://localhost:5000/predict
+      // In production (Vercel): /api/predict
+      const apiUrl = import.meta.env.DEV 
+        ? 'http://localhost:5000/predict'
+        : '/api/predict';
+      
       // Call backend API
-      const response = await fetch('http://localhost:5000/predict', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -131,7 +138,8 @@ export function ForecastingTool({ onNewPrediction }: ForecastingToolProps) {
       }
     } catch (error) {
       console.error('Prediction error:', error);
-      alert(`Failed to get prediction: ${error instanceof Error ? error.message : 'Unknown error'}\n\nMake sure the backend server is running on http://localhost:5000`);
+      const apiUrl = import.meta.env.DEV ? 'http://localhost:5000' : 'on Vercel';
+      alert(`Failed to get prediction: ${error instanceof Error ? error.message : 'Unknown error'}\n\nMake sure the backend server is running ${apiUrl}`);
     } finally {
       setIsLoading(false);
     }
