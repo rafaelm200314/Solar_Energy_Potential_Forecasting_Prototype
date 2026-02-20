@@ -108,12 +108,11 @@ export function ForecastingTool({ onNewPrediction }: ForecastingToolProps) {
       const lat = parseFloat(coordinates.lat);
       const lng = parseFloat(coordinates.lng);
       
-      // Use environment-aware API URL
-      // Development: http://localhost:5000 (from .env.development or default)
-      // Production: Use VITE_API_URL env variable (set in Vercel dashboard)
-      const apiBaseUrl = import.meta.env.VITE_API_URL || 
-                         (import.meta.env.DEV ? 'http://localhost:5000' : '/api');
-      const apiUrl = `${apiBaseUrl}/predict`;
+      // Use relative API URL - same domain in production, localhost in dev
+      // The backend is at / (root) and API is at /predict
+      const apiUrl = import.meta.env.DEV 
+        ? 'http://localhost:5000/predict'
+        : '/predict';
       
       // Call backend API
       const response = await fetch(apiUrl, {
@@ -138,7 +137,7 @@ export function ForecastingTool({ onNewPrediction }: ForecastingToolProps) {
       }
     } catch (error) {
       console.error('Prediction error:', error);
-      const apiInfo = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : 'backend');
+      const apiInfo = import.meta.env.DEV ? 'http://localhost:5000' : window.location.origin;
       alert(`Failed to get prediction: ${error instanceof Error ? error.message : 'Unknown error'}\n\nMake sure the backend server is running at ${apiInfo}`);
     } finally {
       setIsLoading(false);

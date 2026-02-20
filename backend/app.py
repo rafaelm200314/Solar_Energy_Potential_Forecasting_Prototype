@@ -1,8 +1,9 @@
 """
 Flask API Server for Solar Energy Forecasting
 Serves predictions from the trained FI-AdaBoost model
+Also serves the React frontend build as static files
 """
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 import sys
@@ -14,7 +15,9 @@ sys.modules['__main__'].FIAdaBoostRegressor = FIAdaBoostRegressor
 
 from predictor import SolarEnergyPredictor
 
-app = Flask(__name__)
+app = Flask(__name__, 
+    static_folder=os.path.join(os.path.dirname(__file__), '..', 'dist'),
+    static_url_path='')
 CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS for all origins
 
 # Initialize predictor
@@ -153,6 +156,18 @@ def not_found(error):
 @app.errorhandler(500)
 def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
+
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react(path):
+    """Serve React frontend or API endpoints"""
+    # If it's an API call, it would have been handled by routes above
+    # Otherwise serve the React app
+    dist_folder = os.path.join(os.path.dirname(__file__), '..', 'dist')
+    if path != '' and os.path.exists(os.path.join(dist_folder, path)):
+        return send_from_directory(dist_folder, path)
+    return send_from_directory(dist_folder, 'index.html')
 
 
 if __name__ == '__main__':
