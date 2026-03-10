@@ -1,10 +1,21 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ForecastingTool } from './components/ForecastingTool';
 import { ModelAnalytics } from './components/ModelAnalytics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Sun, BarChart3 } from 'lucide-react';
 
 export default function App() {
+  const [selectedCoordinates, setSelectedCoordinates] = useState({ lat: 7.0731, lng: 125.6128 });
+
+  const handleCoordinatesChange = useCallback((lat: number, lng: number) => {
+    setSelectedCoordinates((previous) => {
+      if (previous.lat === lat && previous.lng === lng) {
+        return previous;
+      }
+      return { lat, lng };
+    });
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
       {/* Header */}
@@ -47,11 +58,13 @@ export default function App() {
           </TabsList>
           
           <TabsContent value="forecasting" className="mt-0">
-            <ForecastingTool />
+            <ForecastingTool
+              onCoordinatesChange={handleCoordinatesChange}
+            />
           </TabsContent>
           
           <TabsContent value="analytics" className="mt-0">
-            <ModelAnalytics />
+            <ModelAnalytics lat={selectedCoordinates.lat} lng={selectedCoordinates.lng} />
           </TabsContent>
         </Tabs>
       </main>

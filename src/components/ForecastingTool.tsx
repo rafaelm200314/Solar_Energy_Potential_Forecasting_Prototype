@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { MapPin, Locate, Sun, Home, Compass, Cloud, Droplets, Thermometer, Navigation } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { MapPin, Locate, Sun, Home, Compass, Cloud, Droplets, Thermometer, Navigation, Search } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -39,7 +40,7 @@ function ClickToSetLocation({ onPick }: { onPick: (lat: number, lng: number) => 
   return null;
 }
 
-function RecenterMap({ lat, lng, zoom = 16 }: { lat: number; lng: number; zoom?: number }) {
+function RecenterMap({ lat, lng, zoom = 15 }: { lat: number; lng: number; zoom?: number }) {
   const map = useMap();
 
   useEffect(() => {
@@ -51,12 +52,32 @@ function RecenterMap({ lat, lng, zoom = 16 }: { lat: number; lng: number; zoom?:
 }
 
 
+interface ForecastingToolProps {
+  onCoordinatesChange?: (lat: number, lng: number) => void;
+}
 
-export function ForecastingTool() {
-  const [address, setAddress] = useState('');
-  const [coordinates, setCoordinates] = useState({ lat: '', lng: '' });
+export function ForecastingTool({ onCoordinatesChange }: ForecastingToolProps) {
+  const [address, setAddress] = useState('Davao City, Philippines');
+  const [coordinates, setCoordinates] = useState({ lat: '7.0731', lng: '125.6128' });
   const [isLoading, setIsLoading] = useState(false);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  // Clear prediction when coordinates change
+  useEffect(() => {
+    if (coordinates.lat || coordinates.lng) {
+      setPrediction(null);
+      setApiError(null);
+    }
+  }, [coordinates.lat, coordinates.lng]);
+
+  useEffect(() => {
+    const lat = Number(coordinates.lat);
+    const lng = Number(coordinates.lng);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      onCoordinatesChange?.(lat, lng);
+    }
+  }, [coordinates.lat, coordinates.lng, onCoordinatesChange]);
 
   const handleLocateMe = () => {
     setIsLoading(true);
@@ -85,26 +106,122 @@ export function ForecastingTool() {
     }
   };
 
+  const handleSearchAddress = async () => {
+    if (!address.trim()) {
+      setApiError('Please enter an address to search.');
+      return;
+    }
 
-
-  const handlePredict = () => {
     setIsLoading(true);
-    // Simulate prediction with mock data
-    setTimeout(() => {
-      setPrediction({
-        solarPotential: 5.2 + Math.random() * 0.8,
-        rooftopArea: 85 + Math.random() * 30,
-        solarExposureIndex: 0.75 + Math.random() * 0.15,
-        orientation: 'South-Southeast',
-        azimuth: 155 + Math.random() * 20,
-        sunshineHours: 7.5 + Math.random() * 1.5,
-        cloudCover: 30 + Math.random() * 20,
-        temperature: 28 + Math.random() * 4,
-        humidity: 65 + Math.random() * 15,
-        clearSkyRatio: 0.68 + Math.random() * 0.15,
-      });
+    setApiError(null);
+
+    try {
+      // Use Nominatim (OpenStreetMap) geocoding API
+      // Bias search to Davao City area
+      const query = encodeURIComponent(`${address}, Davao City, Philippines`);
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1&bounded=1&viewbox=125.3,6.8,126.0,7.35`,
+        {
+          headers: {
+            'User-Agent': 'SolarEnergyForecastingApp/1.0'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Geocoding service unavailable');
+      }
+
+      const results = await response.json();
+
+      if (results.length === 0) {
+        setApiError(`Address not found: "${address}". Try including street name or landmark.`);
+        setIsLoading(false);
+        return;
+      }
+
+      const location = results[0];
+      const lat = parseFloat(location.lat).toFixed(6);
+      const lng = parseFloat(location.lon).toFixed(6);
+
+      setCoordinates({ lat, lng });
+      setAddress(location.display_name);
+      console.log('📍 Geocoded address:', location.display_name, '→', lat, lng);
+
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      setApiError('Unable to find address. Please try entering coordinates manually or clicking on the map.');
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
+  };
+
+  const handlePredict = async () => {
+    const lat = Number(coordinates.lat);
+    const lng = Number(coordinates.lng);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      setApiError('Please provide valid latitude and longitude values.');
+      return;
+    }
+
+    console.log('🎯 Predicting for coordinates:', { lat, lng });
+
+    setApiError(null);
+    setIsLoading(true);
+
+    try {
+      const envUrl = import.meta.env.VITE_BACKEND_URL as string | undefined;
+      const host = window.location.hostname || 'localhost';
+      const backendCandidates = [
+        envUrl,
+        `http://${host}:8501`,
+        'http://localhost:8501',
+        'http://127.0.0.1:8501',
+      ].filter((url): url is string => Boolean(url));
+
+      let response: Response | null = null;
+      let lastError: string | null = null;
+
+      for (const backendUrl of backendCandidates) {
+        try {
+          response = await fetch(`${backendUrl}/predict`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ lat, lng }),
+          });
+
+          if (response.ok) {
+            break;
+          }
+
+          lastError = `Prediction request failed with status ${response.status}`;
+        } catch (networkError) {
+          lastError = networkError instanceof Error ? networkError.message : 'Network error';
+        }
+      }
+
+      if (!response || !response.ok) {
+        throw new Error(lastError ?? 'Unable to reach prediction service.');
+      }
+
+      const result: PredictionResult = await response.json();
+      console.log('✅ Prediction result:', result);
+      setPrediction(result);
+    } catch (error) {
+      console.error('❌ Prediction error:', error);
+      const message = error instanceof Error ? error.message : 'Unable to reach prediction service.';
+      if (/Failed to fetch|NetworkError/i.test(message)) {
+        setApiError('Failed to fetch from backend. Make sure Docker backend is running on port 8501 and refresh the page.');
+      } else {
+        setApiError(message);
+      }
+      setPrediction(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getSolarRating = (potential: number): { label: string; color: string; description: string; bgGradient: string } => {
@@ -154,11 +271,26 @@ export function ForecastingTool() {
             <div className="flex gap-2">
               <Input
                 id="address"
-                placeholder="e.g., 123 Main St, Davao City or click on map"
+                placeholder="e.g., SM City Davao, Matina Town Square, or click on map"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearchAddress();
+                  }
+                }}
                 className="flex-1"
               />
+              <Button
+                variant="default"
+                size="icon"
+                onClick={handleSearchAddress}
+                disabled={isLoading || !address.trim()}
+                title="Search for this address"
+                className="shrink-0 bg-blue-600 hover:bg-blue-700"
+              >
+                <Search className="w-4 h-4" />
+              </Button>
               <Button
                 variant="outline"
                 size="icon"
@@ -201,7 +333,14 @@ export function ForecastingTool() {
 <div className="rounded-lg overflow-hidden border-2 border-blue-300 shadow-lg h-64 sm:h-96 md:h-[500px] relative z-0">
   <MapContainer
     center={[7.0731, 125.6128] as [number, number]}
-    zoom={12}
+    zoom={14}
+    minZoom={12}
+    maxZoom={18}
+    maxBounds={[
+      [6.8, 125.3], // Southwest corner of bounds
+      [7.35, 126.0]  // Northeast corner of bounds
+    ]}
+    maxBoundsViscosity={1.0}
     style={{ height: "100%", width: "100%", background: "#e5e7eb" }}
     scrollWheelZoom
   >
@@ -245,6 +384,11 @@ export function ForecastingTool() {
                 <span className="text-gray-600">Selected coordinates:</span>{' '}
                 <span className="font-mono">{coordinates.lat}, {coordinates.lng}</span>
               </p>
+              {!prediction && (
+                <p className="text-xs text-blue-600 mt-1 font-medium">
+                  📍 New location selected - Click "Predict Solar Potential" to analyze
+                </p>
+              )}
             </div>
           )}
 
@@ -266,12 +410,34 @@ export function ForecastingTool() {
               </>
             )}
           </Button>
+
+          {apiError && (
+            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+              <p className="text-sm text-red-700">{apiError}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Results Section */}
       {prediction && (
         <div className="space-y-6">
+          {/* Location Info Banner */}
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border-2 border-blue-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <MapPin className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-semibold text-blue-900">Analysis for Location:</span>
+            </div>
+            <p className="text-sm text-gray-700">
+              <span className="font-mono bg-white px-2 py-1 rounded border border-blue-200">
+                {coordinates.lat}, {coordinates.lng}
+              </span>
+            </p>
+            {address && address !== `${coordinates.lat}, ${coordinates.lng}` && (
+              <p className="text-xs text-gray-600 mt-1">{address}</p>
+            )}
+          </div>
+
           {/* Solar Potential Card */}
           <Card className={`border-2 shadow-2xl bg-gradient-to-br ${getSolarRating(prediction.solarPotential).color === 'bg-emerald-500' ? 'from-emerald-50 via-green-50 to-teal-50 border-emerald-300' : getSolarRating(prediction.solarPotential).color === 'bg-blue-500' ? 'from-blue-50 via-cyan-50 to-sky-50 border-blue-300' : getSolarRating(prediction.solarPotential).color === 'bg-amber-500' ? 'from-amber-50 via-yellow-50 to-orange-50 border-amber-300' : 'from-orange-50 via-red-50 to-rose-50 border-orange-300'}`}>
             <CardHeader>
@@ -431,7 +597,7 @@ export function ForecastingTool() {
 interface InfoItemProps {
   label: string;
   value: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   description?: string;
   gradient: string;
 }
