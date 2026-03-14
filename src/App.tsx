@@ -61,7 +61,7 @@ export default function App() {
               className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-fuchsia-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
             >
               <FlaskConical className="w-4 h-4" />
-              <span className="hidden sm:inline">Global Analysis</span>
+              <span className="hidden sm:inline">Model Analysis</span>
               <span className="sm:hidden">Global</span>
             </TabsTrigger>
           </TabsList>

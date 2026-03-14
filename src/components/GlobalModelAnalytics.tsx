@@ -169,7 +169,7 @@ export function GlobalModelAnalytics() {
     <div className="space-y-8">
       {/* Banner */}
       <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-800">
-        <span className="font-semibold">Global Analysis</span> — training-wide performance metrics and
+        <span className="font-semibold">Model Analysis</span> — training-wide performance metrics and
         visual diagnostics. These plots are independent of any selected map location.
       </div>
 
@@ -331,7 +331,7 @@ export function GlobalModelAnalytics() {
         </CardHeader>
         <CardContent className="space-y-10">
           {/* A. Predicted vs Actual */}
-          <section>
+          {/* <section>
             <h3 className="mb-1 text-lg font-semibold">A. Predicted vs Actual</h3>
             <p className="mb-4 text-sm text-slate-500">
               Points on — or close to — the dashed diagonal indicate accurate predictions.
@@ -358,7 +358,7 @@ export function GlobalModelAnalytics() {
                 message={loading ? 'Loading scatter plots…' : error ?? 'Training analytics unavailable.'}
               />
             )}
-          </section>
+          </section> */}
 
           {/* B. Error distribution */}
           <section>

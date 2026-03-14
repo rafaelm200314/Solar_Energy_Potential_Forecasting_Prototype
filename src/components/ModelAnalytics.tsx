@@ -143,13 +143,13 @@ export function ModelAnalytics({ lat = 7.0731, lng = 125.6128 }: ModelAnalyticsP
                 </div>
               </div>
 
-              <div className="rounded-xl border border-sky-200 bg-white p-4 shadow-sm">
+              {/* <div className="rounded-xl border border-sky-200 bg-white p-4 shadow-sm">
                 <p className="text-xs text-slate-500 uppercase tracking-wide">Prediction Confidence</p>
                 <p className="mt-1 text-3xl font-semibold text-sky-700">
                   {liveComparison.improvement.confidenceLevel.toFixed(1)}%
                 </p>
                 <p className="text-xs text-slate-400">Based on proximity to training data and model agreement</p>
-              </div>
+              </div> */}
             </>
           ) : (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white/70 p-6 text-sm text-slate-500">
